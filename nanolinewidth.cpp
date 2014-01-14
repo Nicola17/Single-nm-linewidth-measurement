@@ -60,12 +60,23 @@ void bilateralFilterOnMap(std::vector<float>& w, int radius, float radSigma, flo
 		w[i] = val/tW;
 	}
 }
+void paramList(){
+	std::cout << "Single_nm_linewidth_measurement.exe input output (par value )*" << std::endl;
+	std::cout << "Parameters:" << std::endl;
+	std::cout << "medianBlurKernelRadius:\t-mr" << std::endl;
+	std::cout << "bilateralRadius:\t-br" << std::endl;
+	std::cout << "bilateralDistSigma:\t-bds" << std::endl;
+	std::cout << "bilateralWeightSigma:\t-bws" << std::endl;
+	std::cout << "saturationFactor:\t-sf" << std::endl;
+	std::cout << "saturationOffset:\t-so" << std::endl;
+}
 
 /************* Main *****************/
 int main(int argc, char *argv[]){
 	try{
 		if(argc<3){
 			std::cout << "Wrong number of parameter";
+			paramList();
 			return 1;
 		}
 		int medianBlurKernelRadius	= 1; 
@@ -73,7 +84,34 @@ int main(int argc, char *argv[]){
 		float bilateralDistSigma	= 3;
 		float bilateralWeightSigma	= 0.05;
 		float saturationFactor		= 2.f;
-		float saturationOffset		= 0.25f;
+		float saturationOffset		= 0.15f;
+
+		for(int p = 3; p < argc; ++p){
+			std::string param(argv[p]);
+			if(param.compare("-mr") == 0 && p < argc-1){
+				++p;
+				medianBlurKernelRadius = atoi(argv[p]);
+			}else if(param.compare("-br") == 0 && p < argc-1){
+				++p;
+				bilateralRadius = atoi(argv[p]);
+			}else if(param.compare("-bds") == 0 && p < argc-1){
+				++p;
+				bilateralDistSigma = atof(argv[p]);
+			}else if(param.compare("-bws") == 0 && p < argc-1){
+				++p;
+				bilateralWeightSigma = atof(argv[p]);
+			}else if(param.compare("-sf") == 0 && p < argc-1){
+				++p;
+				saturationFactor = atof(argv[p]);
+			}else if(param.compare("-so") == 0 && p < argc-1){
+				++p;
+				saturationOffset = atof(argv[p]);
+			}else{
+				std::cout << "Wrong parameter" << std::endl;
+				paramList();
+				return 3;
+			}
+		}
 
 		cv::Mat_<unsigned char> src = cv::imread(argv[1],CV_LOAD_IMAGE_GRAYSCALE);
 		cv::Mat_<unsigned char> elabImage = src.clone();
