@@ -6,9 +6,9 @@
 
 void medianBlurElab(cv::Mat_<unsigned char>& img, int k){
 	cv::Mat_<unsigned char> temp;
-	cv::medianBlur(img,temp,k);
+	cv::medianBlur(img,temp,k*2+1);
 	img = temp.clone();
-	cv::imwrite("0_medianBlur.png", img);
+	
 }
 void computeSquaredColorWeight(const cv::Mat_<unsigned char>& img, std::vector<float>& w){
 	w = std::vector<float>(img.cols,0);
@@ -28,11 +28,10 @@ void computeSquaredColorWeight(const cv::Mat_<unsigned char>& img, std::vector<f
 		w[i] = (w[i]-minVal)/(maxVal-minVal);
 }
 
-void applyColumnMap(cv::Mat_<unsigned char>& img, const std::vector<float>& w, float saturationFactor){
+void applyColumnMap(cv::Mat_<unsigned char>& img, const std::vector<float>& w, float saturationOffset, float saturationFactor){
 	for(int j = 0; j < img.rows; ++j)
 		for(int i = 0; i < img.cols; ++i){
-			const float scale = (0.15+w[i])*saturationFactor;
-
+			const float scale = (saturationOffset+w[i])*saturationFactor;
 			img.at<unsigned char>(j,i) = std::min(scale*img.at<unsigned char>(j,i),255.f);
 		}
 }
@@ -69,25 +68,31 @@ int main(int argc, char *argv[]){
 			std::cout << "Wrong number of parameter";
 			return 1;
 		}
-		
+		int medianBlurKernelRadius	= 1; 
+		int bilateralRadius			= 5; 
+		float bilateralDistSigma	= 3;
+		float bilateralWeightSigma	= 0.05;
+		float saturationFactor		= 2.f;
+		float saturationOffset		= 0.25f;
+
 		cv::Mat_<unsigned char> src = cv::imread(argv[1],CV_LOAD_IMAGE_GRAYSCALE);
 		cv::Mat_<unsigned char> elabImage = src.clone();
 
-		bool medianBlur = true;
-		int medianBlurKernelSize = 3; 
-		float saturationFactor = 2.f;
-
-		if(medianBlur)
-			medianBlurElab(elabImage,medianBlurKernelSize);
+		if(medianBlurKernelRadius>0){
+			medianBlurElab(elabImage,medianBlurKernelRadius);
+			cv::imwrite("medianBlur.png", elabImage);
+		}
 
 		std::vector<float> squaredColorWeight;
 		computeSquaredColorWeight(elabImage,squaredColorWeight);
-		logColumnMap(squaredColorWeight,elabImage.rows,"1_squaredColorWeights.png");
+		logColumnMap(squaredColorWeight,elabImage.rows,"squaredColorWeights.png");
 
-		bilateralFilterOnMap(squaredColorWeight,5,2,0.05);
-		logColumnMap(squaredColorWeight,elabImage.rows,"2_bilateralWeights.png");
+		if(bilateralRadius > 0 && bilateralDistSigma > 0 && bilateralWeightSigma > 0){
+			bilateralFilterOnMap(squaredColorWeight,bilateralRadius,bilateralDistSigma,bilateralWeightSigma);
+			logColumnMap(squaredColorWeight,elabImage.rows,"bilateralWeights.png");
+		}
 
-		applyColumnMap(elabImage,squaredColorWeight,saturationFactor);
+		applyColumnMap(elabImage,squaredColorWeight,saturationOffset,saturationFactor);
 
 		cv::imwrite(argv[2], elabImage);
 	}catch(...){
