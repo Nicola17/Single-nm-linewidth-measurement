@@ -80,11 +80,11 @@ int main(int argc, char *argv[]){
 			return 1;
 		}
 		int medianBlurKernelRadius	= 1; 
-		int bilateralRadius			= 5; 
-		float bilateralDistSigma	= 3;
-		float bilateralWeightSigma	= 0.05;
-		float saturationFactor		= 2.f;
-		float saturationOffset		= 0.15f;
+		int bilateralRadius			= 3; 
+		float bilateralDistSigma	= 1.5;
+		float bilateralWeightSigma	= 0.03;
+		float saturationFactor		= 1.5f;
+		float saturationOffset		= 0.05f;
 
 		for(int p = 3; p < argc; ++p){
 			std::string param(argv[p]);
